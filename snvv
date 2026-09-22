@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        background: #05050f;
+        background-image:
+            radial-gradient(circle at 20% 30%, rgba(80, 80, 200, 0.12) 0%, transparent 45%),
+            radial-gradient(circle at 80% 70%, rgba(200, 80, 200, 0.12) 0%, transparent 45%);
+        min-height: 100vh;
+        overflow: hidden;
+        font-family: 'Montserrat', sans-serif;
+        color: white;
+        position: relative;
+    }
+
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .star {
+        position: absolute; background: white; border-radius: 50%;
+        animation: twinkle linear infinite;
+    }
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.15; transform: scale(0.8); }
+        50% { opacity: 0.9; transform: scale(1.2); }
+    }
+
+    .main-container {
+        position: relative; z-index: 10;
+        width: 100%; height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ============ PHONG BÌ ============ */
+    .envelope-wrapper {
+        position: absolute; cursor: pointer; z-index: 50;
+        animation: floatEnvelope 3s ease-in-out infinite;
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    @keyframes floatEnvelope {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    .envelope {
+        width: 300px; height: 210px;
+        background: linear-gradient(135deg, #f5e6d3, #e0cba8);
+        border-radius: 10px; position: relative;
+        box-shadow: 0 18px 50px rgba(0,0,0,0.6), 0 0 40px rgba(255,200,150,0.15);
+        display: flex; justify-content: center; align-items: center;
+    }
+    .envelope-flap {
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, #e8d5b7, #cbb693);
+        clip-path: polygon(0 0, 50% 48%, 100% 0);
+        transition: transform 0.6s ease;
+        transform-origin: top center; z-index: 2;
+    }
+    .envelope-wrapper:hover .envelope-flap { transform: rotateX(180deg); }
+    .envelope-seal {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 54px; height: 54px;
+        background: linear-gradient(135deg, #e74c3c, #a93226);
+        border-radius: 50%; display: flex;
+        justify-content: center; align-items: center;
+        z-index: 3; font-size: 26px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+    }
+    .envelope-text {
+        position: absolute; bottom: 18px; width: 100%;
+        text-align: center; font-size: 13px; font-weight: 700;
+        letter-spacing: 2px; color: #8b6f4e; z-index: 3;
+        text-transform: uppercase;
+    }
+
+    /* ============ CANVAS ẩn ============ */
+    #textCanvas {
+        position: fixed;
+        top: 0; left: 0;
+        pointer-events: none;
+        opacity: 0;
+        z-index: -1;
+    }
+
+    /* ============ MẢNH KÍNH ============ */
+    .shard {
+        position: fixed;
+        top: 0; left: 0;
+        pointer-events: none;
+        z-index: 45;
+        will-change: transform, opacity, filter;
+        filter: drop-shadow(0 0 5px rgba(255, 220, 180, 0.35));
+    }
+
+    /* ============ CHỮ HAPPY BIRTHDAY ============ */
+    .birthday-text {
+        position: absolute;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+        max-width: 96vw;
+        padding: 0 20px;
+        gap: 0.35em 0.55em;
+        pointer-events: none;
+    }
+    .birthday-text.visible { opacity: 1; }
+
+    .letter-char {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 900;
+        font-size: clamp(4rem, 12vw, 9.5rem);
+        letter-spacing: -0.02em;
+        line-height: 1;
+        background: linear-gradient(135deg,
+            #ff9a9e 0%,
+            #fecfef 25%,
+            #a18cd1 50%,
+            #fbc2eb 75%,
+            #ff9a9e 100%);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+        transition: opacity 1s cubic-bezier(0.34, 1.2, 0.64, 1),
+                    transform 1s cubic-bezier(0.34, 1.2, 0.64, 1),
+                    filter 0.6s ease;
+    }
+    .letter-char.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    .letter-char.glow {
+        animation: glowPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+        0%, 100% {
+            filter: drop-shadow(0 0 3px rgba(255, 190, 230, 0.45))
+                    drop-shadow(0 0 8px rgba(180, 140, 255, 0.25));
+            background-position: 0% 50%;
+        }
+        50% {
+            filter: drop-shadow(0 0 7px rgba(255, 190, 230, 0.9))
+                    drop-shadow(0 0 16px rgba(180, 140, 255, 0.55));
+            background-position: 100% 50%;
+        }
+    }
+
+    /* ============ LỜI CHÚC ============ */
+    .message {
+        position: absolute;
+        bottom: 7%;
+        font-family: 'Montserrat', sans-serif;
+        font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+        font-weight: 500;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0);
+        text-align: center;
+        transition: color 1s ease 0.4s;
+        z-index: 30;
+        padding: 0 20px;
+        line-height: 1.7;
+    }
+    .message.show { color: rgba(255,255,255,0.85); }
+
+    @media (max-width: 600px) {
+        .envelope { width: 230px; height: 165px; }
+        .letter-char { font-size: clamp(2.8rem, 15vw, 6rem); }
+        .birthday-text { gap: 0.3em 0.4em; }
+        .message { bottom: 5%; font-size: 0.8rem; }
+    }
+</style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+
+    <div class="main-container">
+        <div class="envelope-wrapper" id="envelopeWrapper">
+            <div class="envelope">
+                <div class="envelope-flap"></div>
+                <div class="envelope-seal">💌</div>
+                <div class="envelope-text">Mở thư</div>
+            </div>
+        </div>
+
+        <div class="birthday-text" id="birthdayText"></div>
+    </div>
+
+    <div class="message" id="message">
+        Chúc mừng sinh nhật! 🎂<br>
+        Chúc bạn một ngày thật đặc biệt và tràn đầy niềm vui.
+    </div>
+
+    <canvas id="textCanvas"></canvas>
+
+<script>
+/* ============================================================
+   CẤU HÌNH
+============================================================ */
+const PHRASE = "Happy Birthday";
+const SHARD_SIZE = () => Math.max(10, Math.min(window.innerWidth * 0.010, 18));
+
+/* ============================================================
+   SAO NỀN
+============================================================ */
+(function createStars() {
+    const c = document.getElementById('stars');
+    for (let i = 0; i < 160; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.2 + 0.8;
+        s.style.width = size + 'px';
+        s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        s.style.animationDelay = Math.random() * 3 + 's';
+        c.appendChild(s);
+    }
+})();
+
+/* ============================================================
+   TẠO CHỮ HAPPY BIRTHDAY (DOM thật)
+============================================================ */
+const birthdayText = document.getElementById('birthdayText');
+const messageEl = document.getElementById('message');
+const letterElements = [];
+
+PHRASE.split('').forEach((ch) => {
+    const el = document.createElement('span');
+    el.className = 'letter-char';
+    if (ch === ' ') {
+        el.innerHTML = '&nbsp;';
+        el.style.width = '0.25em';
+        el.dataset.space = '1';
+    } else {
+        el.textContent = ch;
+    }
+    birthdayText.appendChild(el);
+    letterElements.push(el);
+});
+
+/* ============================================================
+   MÀU GRADIENT — Dùng chung cho cả shard và chữ
+   → khi fade in/out, màu khớp nhau
+============================================================ */
+function getGradientColorAt(t) {
+    // t: 0 → 1 (theo vị trí ngang của chữ cái trong câu)
+    const stops = [
+        { p: 0.00, c: [255, 154, 158] }, // #ff9a9e
+        { p: 0.25, c: [254, 207, 239] }, // #fecfef
+        { p: 0.50, c: [161, 140, 209] }, // #a18cd1
+        { p: 0.75, c: [251, 194, 235] }, // #fbc2eb
+        { p: 1.00, c: [255, 154, 158] }, // quay lại #ff9a9e
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const a = stops[i], b = stops[i + 1];
+        if (t >= a.p && t <= b.p) {
+            const k = (t - a.p) / (b.p - a.p);
+            const r = Math.round(a.c[0] + (b.c[0] - a.c[0]) * k);
+            const g = Math.round(a.c[1] + (b.c[1] - a.c[1]) * k);
+            const bl = Math.round(a.c[2] + (b.c[2] - a.c[2]) * k);
+            return `rgb(${r},${g},${bl})`;
+        }
+    }
+    return 'rgb(255,154,158)';
+}
+
+/* ============================================================
+   SINH MẢNH KÍNH DỰA TRÊN VỊ TRÍ DOM CỦA TỪNG CHỮ CÁI
+   → Khi ghép lại sẽ trùng khít với chữ thật
+============================================================ */
+function buildShardsFromDOM() {
+    const canvas = document.getElementById('textCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    canvas.width  = vw * dpr;
+    canvas.height = vh * dpr;
+    canvas.style.width  = vw + 'px';
+    canvas.style.height = vh + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const step = SHARD_SIZE();
+    const pxStep = Math.max(2, Math.round(step * dpr * 0.75));
+
+    const shards = [];
+    const totalChars = letterElements.length;
+
+    // Đo tất cả chữ cái (bao gồm khoảng trắng) để tính t cho gradient
+    const charInfos = [];
+    letterElements.forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        charInfos.push({
+            el,
+            index: i,
+            left: r.left,
+            top: r.top,
+            width: r.width,
+            height: r.height,
+            cx: r.left + r.width / 2,
+            cy: r.top + r.height / 2,
+            isSpace: el.dataset.space === '1',
+        });
+    });
+
+    // Tìm min/max X để map gradient
+    const visibleChars = charInfos.filter(c => !c.isSpace);
+    const minX = Math.min(...visibleChars.map(c => c.left));
+    const maxX = Math.max(...visibleChars.map(c => c.left + c.width));
+
+    // Với mỗi chữ cái, vẽ riêng lên canvas, đọc pixel, sinh shard
+    charInfos.forEach((info) => {
+        if (info.isSpace) return;
+
+        // t cho gradient của chữ cái này
+        const t = (info.cx - minX) / (maxX - minX || 1);
+
+        // Xóa canvas vùng chữ cái
+        ctx.clearRect(0, 0, vw, vh);
+
+        // Vẽ chữ cái lên đúng vị trí DOM của nó
+        const fs = parseFloat(getComputedStyle(info.el).fontSize);
+        ctx.font = `900 ${fs}px Montserrat, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#fff';
+
+        // Lấy vị trí chữ cái trong DOM (góc trên trái)
+        const elRect = info.el.getBoundingClientRect();
+        // Vẽ tại vị trí tương ứng trong canvas (cùng toạ độ viewport)
+        // Dùng textBaseline='top' để dễ canh chỉnh
+        ctx.textBaseline = 'top';
+        // Padding nhỏ để chữ không bị cắt
+        const pad = 2;
+        ctx.fillText(info.el.textContent, elRect.left, elRect.top + pad);
+
+        // Đọc pixel trong vùng chữ cái
+        const x0 = Math.max(0, Math.floor(elRect.left - 2));
+        const y0 = Math.max(0, Math.floor(elRect.top - 2));
+        const x1 = Math.min(vw, Math.ceil(elRect.right + 2));
+        const y1 = Math.min(vh, Math.ceil(elRect.bottom + 2));
+
+        if (x1 <= x0 || y1 <= y0) return;
+
+        const imgData = ctx.getImageData(x0 * dpr, y0 * dpr, (x1 - x0) * dpr, (y1 - y0) * dpr).data;
+        const dataW = Math.round((x1 - x0) * dpr);
+
+        for (let y = 0; y < (y1 - y0) * dpr; y += pxStep) {
+            for (let x = 0; x < dataW; x += pxStep) {
+                const idx = (Math.floor(y) * dataW + Math.floor(x)) * 4;
+                if (idx < 0 || idx >= imgData.length) continue;
+                const alpha = imgData[idx + 3];
+                if (alpha > 128) {
+                    const viewX = x0 + x / dpr;
+                    const viewY = y0 + y / dpr;
+                    shards.push({
+                        x: viewX,
+                        y: viewY,
+                        size: step * (0.75 + Math.random() * 0.5),
+                        color: getGradientColorAt(t),
+                        rotation: (Math.random() - 0.5) * 60,
+                        charIndex: info.index,
+                    });
+                }
+            }
+        }
+    });
+
+    ctx.clearRect(0, 0, vw, vh);
+    return shards;
+}
+
+/* ============================================================
+   TẠO DOM MẢNH KÍNH
+============================================================ */
+function createShardElements(shards) {
+    const elements = [];
+    const env = document.getElementById('envelopeWrapper').getBoundingClientRect();
+    const envCx = env.left + env.width / 2;
+    const envCy = env.top + env.height / 2;
+
+    shards.forEach((s) => {
+        const el = document.createElement('div');
+        el.className = 'shard';
+
+        const w = s.size;
+        const h = s.size * (0.7 + Math.random() * 0.6);
+
+        el.style.width = w + 'px';
+        el.style.height = h + 'px';
+        el.style.background = s.color;
+        el.style.clipPath = randomShardClip();
+
+        el.style.left = (envCx - w / 2) + 'px';
+        el.style.top  = (envCy - h / 2) + 'px';
+        el.style.transform = `rotate(${s.rotation}deg)`;
+
+        // Lưu target chính xác
+        el.dataset.targetX = s.x;
+        el.dataset.targetY = s.y;
+        el.dataset.size = s.size;
+        el.dataset.charIndex = s.charIndex;
+
+        document.body.appendChild(el);
+        elements.push(el);
+    });
+
+    return elements;
+}
+
+function randomShardClip() {
+    const n = 3 + Math.floor(Math.random() * 3);
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.9;
+        const r = 32 + Math.random() * 22;
+        const x = 50 + Math.cos(a) * r;
+        const y = 50 + Math.sin(a) * r;
+        pts.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
+    }
+    return `polygon(${pts.join(', ')})`;
+}
+
+/* ============================================================
+   BAY RA & LƠ LỬNG
+============================================================ */
+function flyOut(elements) {
+    elements.forEach((el) => {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 130 + Math.random() * 180;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = (Math.random() - 0.5) * 300;
+
+        el.style.transition = `transform 1.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s ease`;
+        el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+
+        el.animate(
+            [
+                { filter: 'drop-shadow(0 0 5px rgba(255,220,180,0.35))' },
+                { filter: 'drop-shadow(0 0 14px rgba(255,200,255,0.7))' },
+                { filter: 'drop-shadow(0 0 5px rgba(255,220,180,0.35))' }
+            ],
+            { duration: 2200, iterations: Infinity }
+        );
+    });
+}
+
+/* ============================================================
+   GHÉP MẢNH THEO TỪNG CHỮ CÁI (dựa vào charIndex thực)
+============================================================ */
+function assembleShards(elements) {
+    // Nhóm theo charIndex — chính xác 100%
+    const groupsMap = new Map();
+    elements.forEach(el => {
+        const ci = +el.dataset.charIndex;
+        if (!groupsMap.has(ci)) groupsMap.set(ci, []);
+        groupsMap.get(ci).push(el);
+    });
+
+    // Sắp xếp theo thứ tự chữ cái
+    const sortedKeys = [...groupsMap.keys()].sort((a, b) => a - b);
+
+    const GROUP_DELAY = 420;   // mỗi chữ cách nhau
+    const SHARD_DELAY = 6;     // mỗi mảnh trong chữ cách nhau
+
+    sortedKeys.forEach((charIdx, gi) => {
+        const group = groupsMap.get(charIdx);
+        group.forEach((el, si) => {
+            const delay = gi * GROUP_DELAY + si * SHARD_DELAY;
+
+            setTimeout(() => {
+                const targetX = parseFloat(el.dataset.targetX);
+                const targetY = parseFloat(el.dataset.targetY);
+                const w = el.offsetWidth;
+                const h = el.offsetHeight;
+
+                // Vị trí tuyệt đối cần đặt để tâm mảnh trùng (targetX, targetY)
+                const newLeft = targetX - w / 2;
+                const newTop  = targetY - h / 2;
+
+                // Lấy vị trí hiện tại
+                const rect = el.getBoundingClientRect();
+                const currentLeft = rect.left;
+                const currentTop  = rect.top;
+
+                // Delta
+                const dx = newLeft - currentLeft;
+                const dy = newTop  - currentTop;
+
+                // Bay về đích bằng transform (mượt, GPU)
+                el.style.transition = 'transform 1s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease';
+                el.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(1)`;
+
+                // Sau khi về, chốt vị trí bằng left/top để tránh sai số
+                setTimeout(() => {
+                    el.style.left = newLeft + 'px';
+                    el.style.top  = newTop + 'px';
+                    el.style.transform = 'translate(0,0) rotate(0deg)';
+                }, 1000);
+            }, delay);
+        });
+    });
+
+    // Tổng thời gian ghép
+    const totalTime = sortedKeys.length * GROUP_DELAY + 1200;
+    return totalTime;
+}
+
+/* ============================================================
+   FADE OUT MẢNH VỠ -> FADE IN CHỮ
+   Chìa khoá mượt: mảnh vỡ và chữ trùng khít vị trí + màu.
+============================================================ */
+function fadeOutShardsAndFadeInText(elements, totalTime) {
+    setTimeout(() => {
+        // 1) Fade out các mảnh vỡ
+        elements.forEach((el, i) => {
+            el.style.transition = 'opacity 0.9s ease, filter 0.9s ease, transform 0.9s ease';
+            const d = (i % 50) * 6;
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.filter = 'drop-shadow(0 0 16px rgba(255,210,255,0.85)) brightness(1.4)';
+                el.style.transform = 'translate(0,0) rotate(0deg) scale(1.08)';
+            }, d);
+        });
+
+        // 2) Bắt đầu fade in chữ song song (sau 250ms — chồng lấn để chuyển mượt)
+        setTimeout(() => {
+            birthdayText.classList.add('visible');
+
+            letterElements.forEach((el, i) => {
+                if (el.dataset.space === '1') return;
+                setTimeout(() => {
+                    el.classList.add('show');
+                }, i * 130);
+            });
+
+            // 3) Bật đom đóm
+            const glowDelay = letterElements.length * 130 + 400;
+            setTimeout(() => {
+                letterElements.forEach((el) => {
+                    if (el.dataset.space !== '1') el.classList.add('glow');
+                });
+                messageEl.classList.add('show');
+            }, glowDelay);
+
+            // 4) Dọn DOM mảnh vỡ
+            setTimeout(() => {
+                elements.forEach(el => el.remove());
+            }, 1500);
+        }, 250);
+    }, totalTime);
+}
+
+/* ============================================================
+   SỰ KIỆN CLICK
+============================================================ */
+let opened = false;
+document.getElementById('envelopeWrapper').addEventListener('click', function () {
+    if (opened) return;
+    opened = true;
+
+    const env = this;
+    env.style.opacity = '0';
+    env.style.transform = 'scale(0.7)';
+    env.style.pointerEvents = 'none';
+    setTimeout(() => env.remove(), 700);
+
+    // Sinh shard từ DOM thật → vị trí & màu khớp chữ
+    const shardData = buildShardsFromDOM();
+    const elements = createShardElements(shardData);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            flyOut(elements);
+        });
+    });
+
+    setTimeout(() => {
+        const totalTime = assembleShards(elements);
+        fadeOutShardsAndFadeInText(elements, totalTime);
+    }, 2000);
+});
+
+/* Nhấp nháy phong bì */
+setInterval(() => {
+    const env = document.querySelector('.envelope-wrapper');
+    if (env && !opened) {
+        const glow = 10 + Math.sin(Date.now() / 500) * 8;
+        env.style.filter = `drop-shadow(0 0 ${glow}px rgba(255, 200, 120, 0.55))`;
+    }
+}, 60);
+</script>
+</body>
+</html>
